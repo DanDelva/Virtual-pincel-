@@ -194,3 +194,33 @@ input[type='range']::-moz-range-thumb {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Censura de señas obscenas ---------- */
+.censor-box {
+  position: absolute;
+  z-index: 15;
+  display: none;
+  place-items: center;
+  border-radius: 1rem;
+  background: rgb(20 20 34 / 0.82);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  border: 2px solid rgb(239 68 68 / 0.7);
+  font-size: clamp(1.5rem, 8vw, 3rem);
+  pointer-events: none;
+}
+.censor-box[data-visible='true'] { display: grid; }
+
+/* ---------- Reacciones (me gusta, no me gusta, corazón) ---------- */
+@keyframes reaction-float {
+  0% { opacity: 0; transform: translateY(0) scale(0.4) rotate(0deg); }
+  15% { opacity: 1; transform: translateY(-12%) scale(1.15) rotate(var(--tilt)); }
+  100% { opacity: 0; transform: translateY(-340%) scale(1) rotate(calc(var(--tilt) * -1)); }
+}
+.reaction-emoji {
+  position: absolute;
+  bottom: 12%;
+  font-size: clamp(2rem, 11vw, 3.5rem);
+  animation: reaction-float 1.7s ease-out both;
+  pointer-events: none;
+}

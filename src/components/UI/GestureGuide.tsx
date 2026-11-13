@@ -3,7 +3,7 @@ import type { DrawMode, Gesture } from '../../types'
 import { GESTURE_INFO } from '../../utils/gestureUtils'
 import { GESTURE_ICONS } from './GestureStatus'
 
-const ORDER: Gesture[] = ['point', 'pinch', 'open', 'select', 'fist']
+const ORDER: Gesture[] = ['point', 'pinch', 'open', 'select', 'fist', 'like', 'dislike', 'heart', 'obscene']
 
 function describe(gesture: Gesture, drawMode: DrawMode): string {
   switch (gesture) {
@@ -17,6 +17,14 @@ function describe(gesture: Gesture, drawMode: DrawMode): string {
       return 'Índice y medio arriba: mantén el cursor sobre una opción para elegirla.'
     case 'fist':
       return 'Mueve el puño sobre el dibujo para borrar.'
+    case 'like':
+      return 'Pulgar arriba: lanza una reacción 👍.'
+    case 'dislike':
+      return 'Pulgar abajo: lanza una reacción 👎.'
+    case 'heart':
+      return 'Une índices arriba y pulgares abajo con las dos manos: ❤️.'
+    case 'obscene':
+      return 'El dedo medio levantado se tapa en el vídeo.'
     default:
       return ''
   }

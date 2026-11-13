@@ -1,4 +1,4 @@
-import { CircleDashed, Grab, Hand, MousePointerClick, Pencil, Pointer, type LucideIcon } from 'lucide-react'
+import { Ban, CircleDashed, Grab, Hand, Heart, MousePointerClick, Pencil, Pointer, ThumbsDown, ThumbsUp, type LucideIcon } from 'lucide-react'
 import { memo } from 'react'
 import type { DrawMode, Gesture } from '../../types'
 import { GESTURE_INFO } from '../../utils/gestureUtils'
@@ -10,6 +10,10 @@ export const GESTURE_ICONS: Record<Gesture, LucideIcon> = {
   open: Hand,
   select: MousePointerClick,
   fist: Grab,
+  like: ThumbsUp,
+  dislike: ThumbsDown,
+  heart: Heart,
+  obscene: Ban,
 }
 
 interface Props {

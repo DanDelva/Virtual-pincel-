@@ -3,6 +3,7 @@ import type { Gesture, Landmark, Point } from '../types'
 /** Índices de los 21 puntos de referencia de MediaPipe Hands. */
 export const LM = {
   WRIST: 0,
+  THUMB_MCP: 2,
   THUMB_TIP: 4,
   INDEX_MCP: 5,
   INDEX_PIP: 6,
@@ -64,6 +65,12 @@ export interface HandMetrics {
   fingers: { index: FingerState; middle: FingerState; ring: FingerState; pinky: FingerState }
   /** Distancia punta del índice – nudillo del índice, relativa a la palma. */
   indexReach: number
+  /** Distancia punta del pulgar – centro de la palma: grande cuando el pulgar está estirado. */
+  thumbReach: number
+  /** Cuánto apunta el pulgar hacia arriba (+) o hacia abajo (−), relativo a la palma. */
+  thumbVertical: number
+  /** Cuánto apunta el pulgar hacia un lado (valor absoluto), relativo a la palma. */
+  thumbHorizontal: number
 }
 
 export type FingerState = 'extended' | 'curled' | 'partial'
@@ -82,6 +89,9 @@ export function measureHand(landmarks: Landmark[], aspect: number): HandMetrics 
   return {
     pinchRatio: dist2(p[LM.THUMB_TIP], p[LM.INDEX_TIP]) / palm,
     indexReach: dist3(p[LM.INDEX_TIP], p[LM.INDEX_MCP]) / palm,
+    thumbReach: dist2(p[LM.THUMB_TIP], p[LM.MIDDLE_MCP]) / palm,
+    thumbVertical: (p[LM.THUMB_MCP].y - p[LM.THUMB_TIP].y) / palm,
+    thumbHorizontal: Math.abs(p[LM.THUMB_TIP].x - p[LM.THUMB_MCP].x) / palm,
     fingers: {
       index: fingerState(p[LM.INDEX_MCP], p[LM.INDEX_PIP], p[LM.INDEX_TIP]),
       middle: fingerState(p[LM.MIDDLE_MCP], p[LM.MIDDLE_PIP], p[LM.MIDDLE_TIP]),
@@ -98,6 +108,15 @@ export function measureHand(landmarks: Landmark[], aspect: number): HandMetrics 
 export function classifyGesture(m: HandMetrics, pinchThreshold: number, wasPinching: boolean): Gesture {
   const { index, middle, ring, pinky } = m.fingers
   const ext = (f: FingerState) => f === 'extended'
+
+  // Seña obscena: solo el dedo medio estirado.
+  if (ext(middle) && !ext(index) && !ext(ring) && !ext(pinky)) return 'obscene'
+
+  // Pulgar arriba / abajo: dedos recogidos y pulgar estirado en vertical.
+  const fingersFolded = !ext(index) && !ext(middle) && !ext(ring) && !ext(pinky) && middle === 'curled' && m.indexReach < 0.7
+  if (fingersFolded && m.thumbReach > 0.7 && Math.abs(m.thumbVertical) > 0.4 && Math.abs(m.thumbVertical) > m.thumbHorizontal) {
+    return m.thumbVertical > 0 ? 'like' : 'dislike'
+  }
 
   // Puño: los cuatro dedos recogidos y la punta del índice pegada a su nudillo
   // (esto lo distingue de una pinza con el resto de dedos cerrados).
@@ -153,6 +172,35 @@ export class GestureStabilizer {
   }
 }
 
+/**
+ * Corazón con las dos manos: las puntas de los índices se tocan arriba y las de
+ * los pulgares abajo.
+ */
+export function isTwoHandHeart(a: Landmark[], b: Landmark[], aspect: number): boolean {
+  const pa = a.map((l) => toMetric(l, aspect))
+  const pb = b.map((l) => toMetric(l, aspect))
+  const palmOf = (p: Landmark[]) => Math.max(dist2(p[LM.WRIST], p[LM.MIDDLE_MCP]), dist2(p[LM.INDEX_MCP], p[LM.PINKY_MCP]), 1e-6)
+  const palm = (palmOf(pa) + palmOf(pb)) / 2
+  const indexGap = dist2(pa[LM.INDEX_TIP], pb[LM.INDEX_TIP]) / palm
+  const thumbGap = dist2(pa[LM.THUMB_TIP], pb[LM.THUMB_TIP]) / palm
+  const drop = (pa[LM.THUMB_TIP].y + pb[LM.THUMB_TIP].y - pa[LM.INDEX_TIP].y - pb[LM.INDEX_TIP].y) / 2 / palm
+  return indexGap < 0.5 && thumbGap < 0.5 && drop > 0.4
+}
+
+/** Rectángulo (0..1 en coordenadas de cámara) que contiene la mano, con margen. */
+export function handBounds(landmarks: Landmark[], padding = 0.2) {
+  let minX = 1, minY = 1, maxX = 0, maxY = 0
+  for (const l of landmarks) {
+    if (l.x < minX) minX = l.x
+    if (l.x > maxX) maxX = l.x
+    if (l.y < minY) minY = l.y
+    if (l.y > maxY) maxY = l.y
+  }
+  const px = (maxX - minX) * padding
+  const py = (maxY - minY) * padding
+  return { minX: minX - px, minY: minY - py, maxX: maxX + px, maxY: maxY + py }
+}
+
 /** Punto que controla el cursor: centro de la palma con el puño, punta del índice en el resto. */
 export function gestureAnchor(landmarks: Landmark[], gesture: Gesture): Point {
   if (gesture === 'fist') {
@@ -171,4 +219,8 @@ export const GESTURE_INFO: Record<Gesture, { label: string; hint: string; color:
   open: { label: 'Mano abierta', hint: 'Pausa · apunta a una herramienta', color: '#34d399' },
   select: { label: 'Selección', hint: 'Mantén el cursor sobre una opción', color: '#fbbf24' },
   fist: { label: 'Puño cerrado', hint: 'Borrador activo', color: '#fb7185' },
+  like: { label: 'Me gusta', hint: 'Pulgar arriba', color: '#4ade80' },
+  dislike: { label: 'No me gusta', hint: 'Pulgar abajo', color: '#f97316' },
+  heart: { label: 'Corazón', hint: 'Corazón con las dos manos', color: '#f472b6' },
+  obscene: { label: 'Seña censurada', hint: 'Seña obscena detectada', color: '#ef4444' },
 }

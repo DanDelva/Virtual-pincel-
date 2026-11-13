@@ -7,6 +7,7 @@ interface Props {
   drawing: DrawingApi
   stageRef: RefObject<HTMLDivElement | null>
   cursorRef: RefObject<HTMLDivElement | null>
+  censorRef: RefObject<HTMLDivElement | null>
   background: CanvasBackground
   /** Flujo de cámara para el fondo «Cámara». */
   stream: MediaStream | null
@@ -32,7 +33,7 @@ function BackgroundVideo({ stream, mirrored }: { stream: MediaStream; mirrored: 
   return <video ref={ref} className={`absolute inset-0 size-full object-cover opacity-70 ${mirrored ? '-scale-x-100' : ''}`} playsInline muted autoPlay />
 }
 
-function DrawingCanvasBase({ drawing, stageRef, cursorRef, background, stream, mirrored, color, size, tool, children }: Props) {
+function DrawingCanvasBase({ drawing, stageRef, cursorRef, censorRef, background, stream, mirrored, color, size, tool, children }: Props) {
   const pointerId = useRef<number | null>(null)
 
   // Alternativa táctil / ratón: útil para retocar o si no hay cámara disponible.
@@ -79,6 +80,9 @@ function DrawingCanvasBase({ drawing, stageRef, cursorRef, background, stream, m
         onPointerCancel={onPointerUp}
         aria-label="Lienzo de dibujo"
       />
+      <div ref={censorRef} className="censor-box" data-visible="false" aria-hidden>
+        <span>🚫</span>
+      </div>
       <div ref={cursorRef} className="gesture-cursor" data-visible="false" data-mode="hover" aria-hidden>
         <div className="cursor-shape" />
       </div>

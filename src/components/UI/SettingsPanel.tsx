@@ -168,6 +168,15 @@ export function SettingsPanel({ settings, onChange, onReset, onClose }: Props) {
                 onChange={(e) => onChange({ showLandmarks: e.target.checked })}
               />
             </label>
+            <label className="flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold text-white">Censurar señas obscenas</span>
+              <input
+                type="checkbox"
+                className="size-5 accent-violet-500"
+                checked={settings.censor}
+                onChange={(e) => onChange({ censor: e.target.checked })}
+              />
+            </label>
           </Section>
 
           <Section title="Gestos">

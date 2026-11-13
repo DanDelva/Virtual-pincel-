@@ -23,7 +23,7 @@ async function create(delegate: Delegate): Promise<HandLandmarker> {
       return await HandLandmarker.createFromOptions(fileset, {
         baseOptions: { modelAssetPath: source.model, delegate },
         runningMode: 'VIDEO',
-        numHands: 1,
+        numHands: 2,
         minHandDetectionConfidence: 0.6,
         minHandPresenceConfidence: 0.6,
         minTrackingConfidence: 0.6,
@@ -56,15 +56,15 @@ export class HandDetector {
     return detector
   }
 
-  /** Devuelve los 21 puntos de la primera mano detectada, o null. */
-  detect(video: HTMLVideoElement, timestampMs: number): Landmark[] | null {
+  /** Devuelve los 21 puntos de cada mano detectada (hasta dos), o null si no hay ninguna. */
+  detect(video: HTMLVideoElement, timestampMs: number): Landmark[][] | null {
     if (!this.landmarker || this.recovering) return null
     // MediaPipe exige marcas de tiempo estrictamente crecientes.
     const ts = Math.max(timestampMs, this.lastTimestamp + 1)
     this.lastTimestamp = ts
     try {
       const result = this.landmarker.detectForVideo(video, ts)
-      return result.landmarks[0] ?? null
+      return result.landmarks.length > 0 ? result.landmarks : null
     } catch (err) {
       if (this.delegate === 'GPU') {
         void this.fallbackToCpu()

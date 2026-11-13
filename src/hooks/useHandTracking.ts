@@ -36,6 +36,8 @@ export function useHandTracking({ videoRef, active, settingsRef, onFrame }: Opti
     let lastDetected = false
     // Tolerancia a pérdidas breves de la mano (1–2 fotogramas) sin cortar el trazo.
     let missed = 0
+    // Con dos manos a la vista, la que dibuja es la más cercana a la del fotograma anterior.
+    let lastWrist: { x: number; y: number } | null = null
     const recognizer = new GestureRecognizer()
 
     const publish = (detected: boolean, g: Gesture) => {
@@ -59,9 +61,9 @@ export function useHandTracking({ videoRef, active, settingsRef, onFrame }: Opti
       lastVideoTime = video.currentTime
 
       const now = performance.now()
-      let landmarks = null
+      let hands = null
       try {
-        landmarks = detector.detect(video, now)
+        hands = detector.detect(video, now)
       } catch (err) {
         console.error('[tracking] Error de detección', err)
         cancelled = true
@@ -77,9 +79,10 @@ export function useHandTracking({ videoRef, active, settingsRef, onFrame }: Opti
         fpsWindowStart = now
       }
 
-      if (!landmarks) {
+      if (!hands) {
         missed += 1
         if (missed > 3) {
+          lastWrist = null
           recognizer.reset()
           publish(false, 'none')
           onFrameRef.current(null)
@@ -88,7 +91,14 @@ export function useHandTracking({ videoRef, active, settingsRef, onFrame }: Opti
       }
       missed = 0
       const videoAspect = video.videoWidth / video.videoHeight
-      const result = recognizer.recognize(landmarks, videoAspect, settingsRef.current)
+      let primary = 0
+      if (hands.length > 1 && lastWrist) {
+        const d = (i: number) => Math.hypot(hands[i][0].x - lastWrist!.x, hands[i][0].y - lastWrist!.y)
+        primary = d(1) < d(0) ? 1 : 0
+      }
+      const landmarks = hands[primary]
+      lastWrist = { x: landmarks[0].x, y: landmarks[0].y }
+      const result = recognizer.recognize(landmarks, videoAspect, settingsRef.current, hands[1 - primary])
       publish(true, result.gesture)
       onFrameRef.current({ landmarks, ...result, videoAspect, time: now })
     }
