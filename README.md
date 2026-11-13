@@ -51,7 +51,7 @@ npm test           # pruebas unitarias (gestos, coordenadas, suavizado)
 
 El teléfono necesita HTTPS para acceder a la cámara (una IP local como `http://192.168.x.x` no sirve). Opciones:
 
-1. **GitHub Pages** (incluido): fusiona en `main`, activa *Settings → Pages → Source: GitHub Actions* y el flujo `.github/workflows/deploy.yml` publicará la app en una URL HTTPS.
+1. **GitHub Pages** (incluido): funciona con las dos configuraciones de *Settings → Pages → Source*. Con «GitHub Actions», el flujo `.github/workflows/deploy.yml` compila y publica en cada cambio a `main`. Con «Deploy from a branch», la raíz redirige a la copia compilada de `docs/`; tras cambiar el código hay que regenerarla con `npm run build:pages` y subirla.
 2. Cualquier hosting estático (Vercel, Netlify, Cloudflare Pages…) sirviendo la carpeta `dist/`.
 3. Un túnel HTTPS hacia tu servidor local (por ejemplo `cloudflared` o `ngrok`).
 
