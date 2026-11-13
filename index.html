@@ -6,6 +6,11 @@
     <meta name="theme-color" content="#0b0b14" />
     <meta name="description" content="Dibuja en el aire con los gestos de tu mano. Todo el procesamiento ocurre en tu navegador." />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <script>
+      // Si GitHub Pages sirve el repositorio sin compilar (modo "Deploy from a branch"),
+      // Vite no ha sustituido este marcador: se redirige a la versión compilada en docs/.
+      if ('%MODE%'.charAt(0) === '%') location.replace('./docs/')
+    </script>
     <title>Virtual Pincel · Dibuja con gestos</title>
   </head>
   <body>
