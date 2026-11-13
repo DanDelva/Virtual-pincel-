@@ -34,8 +34,8 @@ function HeaderBase({ cameraStatus, fps, onOpenSettings, children }: Props) {
       <div className="flex items-center gap-2">
         <div className="glass flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-slate-200" role="status">
           <span className={`size-2 rounded-full ${status.dot}`} />
-          <span className="hidden min-[420px]:inline">{status.label}</span>
-          {cameraStatus === 'active' && fps > 0 && <span className="tabular-nums text-slate-400">{fps} fps</span>}
+          <span className="hidden sm:inline">{status.label}</span>
+          {cameraStatus === 'active' && fps > 0 && <span className="whitespace-nowrap tabular-nums text-slate-400">{fps} fps</span>}
         </div>
         {children}
         <button type="button" className="icon-btn size-10" onClick={onOpenSettings} aria-label="Ajustes y ayuda" title="Ajustes y ayuda">

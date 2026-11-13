@@ -6,13 +6,13 @@ Aplicación web para **dibujar en el aire** con los gestos de la mano. La cámar
 
 | Gesto | Acción |
 | --- | --- |
-| ☝️ Índice levantado | Modo dibujo: mueve el cursor por el lienzo |
-| 🤏 Índice y pulgar juntos (pinza) | Traza mientras se mantiene la pinza |
+| ☝️ Índice levantado | Pinta con la punta del índice |
+| 🤏 Índice y pulgar juntos (pinza) | También pinta mientras se mantiene la pinza |
 | ✋ Mano abierta | Pausa el dibujo y abre el menú de herramientas |
 | ✌️ Índice y medio levantados | Selección: mantén el cursor ~0,75 s sobre un color o herramienta (con un breve bloqueo entre activaciones) |
 | ✊ Puño cerrado | Borrador |
 
-En **Ajustes** puedes cambiar al modo «Solo índice» (el índice pinta directamente), ajustar el **umbral de la pinza**, la **sensibilidad**, el **suavizado**, los **fotogramas de estabilidad** y el fondo del lienzo (oscuro, claro o la propia cámara). También se puede dibujar con el dedo o el ratón.
+En **Ajustes** puedes cambiar al modo «Solo pinza» (el índice solo mueve el cursor y la pinza pinta), ajustar el **umbral de la pinza**, la **sensibilidad**, el **suavizado**, los **fotogramas de estabilidad** y el fondo del lienzo (oscuro, claro o la propia cámara). También se puede dibujar con el dedo o el ratón.
 
 ## Funcionalidades
 
