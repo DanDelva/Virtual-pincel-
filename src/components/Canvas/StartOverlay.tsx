@@ -20,7 +20,7 @@ function StartOverlayBase({ status, error, onStart }: Props) {
         <div>
           <h2 className="text-xl font-extrabold text-white">Dibuja en el aire</h2>
           <p className="mt-1.5 text-sm leading-relaxed text-slate-300">
-            Activa la cámara, levanta el índice y junta <strong className="text-white">índice y pulgar</strong> para pintar. Abre la mano para elegir colores.
+            Activa la cámara y <strong className="text-white">levanta el índice</strong> para pintar. Abre la mano para parar y elegir colores; cierra el puño para borrar.
           </p>
         </div>
 

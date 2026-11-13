@@ -27,11 +27,11 @@ const DEFAULT_SETTINGS: Settings = {
   sensitivity: 0.5,
   smoothing: 0.5,
   stabilityFrames: 3,
-  drawMode: 'pinch',
+  drawMode: 'index',
   showLandmarks: true,
   background: 'light',
 }
-const STORAGE_KEY = 'virtual-pincel:settings:v2'
+const STORAGE_KEY = 'virtual-pincel:settings:v3'
 
 function loadSettings(): Settings {
   try {

@@ -165,7 +165,7 @@ export function gestureAnchor(landmarks: Landmark[], gesture: Gesture): Point {
 }
 
 export const GESTURE_INFO: Record<Gesture, { label: string; hint: string; color: string }> = {
-  none: { label: 'Sin gesto', hint: 'Levanta el índice para empezar', color: '#94a3b8' },
+  none: { label: 'Sin gesto', hint: 'Levanta el índice para pintar', color: '#94a3b8' },
   point: { label: 'Índice levantado', hint: 'Modo dibujo: mueve el cursor', color: '#22d3ee' },
   pinch: { label: 'Pinza', hint: 'Trazando sobre el lienzo', color: '#a78bfa' },
   open: { label: 'Mano abierta', hint: 'Pausa · apunta a una herramienta', color: '#34d399' },

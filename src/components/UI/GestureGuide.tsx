@@ -8,9 +8,9 @@ const ORDER: Gesture[] = ['point', 'pinch', 'open', 'select', 'fist']
 function describe(gesture: Gesture, drawMode: DrawMode): string {
   switch (gesture) {
     case 'point':
-      return drawMode === 'index' ? 'Dibuja directamente con la punta del índice.' : 'Mueve el cursor por el lienzo sin pintar.'
+      return drawMode === 'index' ? 'Pinta con la punta del índice mientras el resto de dedos están recogidos.' : 'Mueve el cursor por el lienzo sin pintar.'
     case 'pinch':
-      return 'Junta índice y pulgar para trazar; sepáralos para soltar.'
+      return drawMode === 'index' ? 'Juntar índice y pulgar también pinta.' : 'Junta índice y pulgar para trazar; sepáralos para soltar.'
     case 'open':
       return 'Detiene el dibujo y muestra el menú de herramientas.'
     case 'select':

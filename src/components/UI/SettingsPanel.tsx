@@ -93,14 +93,14 @@ export function SettingsPanel({ settings, onChange, onReset, onClose }: Props) {
                 value={settings.drawMode}
                 onChange={(drawMode) => onChange({ drawMode })}
                 options={[
-                  { value: 'pinch', label: 'Pinza (recomendado)' },
-                  { value: 'index', label: 'Solo índice' },
+                  { value: 'index', label: 'Índice (recomendado)' },
+                  { value: 'pinch', label: 'Solo pinza' },
                 ]}
               />
               <p className="mt-1.5 text-xs text-slate-400">
                 {settings.drawMode === 'pinch'
                   ? 'El índice mueve el cursor y la pinza índice–pulgar pinta.'
-                  : 'El índice levantado pinta directamente; abre la mano para parar.'}
+                  : 'El índice levantado pinta directamente (la pinza también). Abre la mano o levanta dos dedos para mover el cursor sin pintar.'}
               </p>
             </div>
             <div>
