@@ -9,7 +9,7 @@ Aplicación web para **dibujar en el aire** con los gestos de la mano. La cámar
 | ☝️ Índice levantado | Modo dibujo: mueve el cursor por el lienzo |
 | 🤏 Índice y pulgar juntos (pinza) | Traza mientras se mantiene la pinza |
 | ✋ Mano abierta | Pausa el dibujo y abre el menú de herramientas |
-| ✌️ Índice y medio levantados | Selección: mantén el cursor ~0,75 s sobre un color o herramienta |
+| ✌️ Índice y medio levantados | Selección: mantén el cursor ~0,75 s sobre un color o herramienta (con un breve bloqueo entre activaciones) |
 | ✊ Puño cerrado | Borrador |
 
 En **Ajustes** puedes cambiar al modo «Solo índice» (el índice pinta directamente), ajustar el **umbral de la pinza**, la **sensibilidad**, el **suavizado**, los **fotogramas de estabilidad** y el fondo del lienzo (oscuro, claro o la propia cámara). También se puede dibujar con el dedo o el ratón.
@@ -18,7 +18,8 @@ En **Ajustes** puedes cambiar al modo «Solo índice» (el índice pinta directa
 
 - Cámara en tiempo real con los 21 puntos de la mano superpuestos; encender/apagar y cambiar entre cámara frontal y trasera.
 - 8 colores (negro, blanco, rojo, azul, verde, amarillo, morado, naranja) y 3 grosores (3, 8 y 16 px).
-- Borrador, deshacer (también deshace «limpiar»), limpiar lienzo y descarga en PNG.
+- Borrador, deshacer y rehacer (incluido «limpiar»), limpiar lienzo con confirmación y descarga en PNG.
+- Pensada para el teléfono: en pantallas pequeñas la cámara se muestra detrás del lienzo para dibujar justo donde está el dedo, la pantalla no se apaga mientras la cámara está activa y la interfaz se adapta a vertical y horizontal.
 - Trazos suaves: filtro One Euro sobre el cursor + interpolación con curvas cuadráticas.
 - Gestos estables: histéresis en la pinza y confirmación tras varios fotogramas consecutivos.
 - Interfaz responsiva (móvil, tableta y escritorio) con mensajes claros para permisos denegados, cámara no disponible o fallo al cargar el modelo.
@@ -92,4 +93,4 @@ src/
 
 ## Estado de las pruebas
 
-Verificado de forma automática en Chromium (móvil y escritorio emulados) con una cámara simulada: arranque de cámara, carga del modelo, detección de mano, reconocimiento de índice / selección / puño / mano abierta sobre fotos reales, dibujo, borrador, deshacer, limpiar, descarga PNG y liberación de la cámara. Queda pendiente la prueba manual con cámara real en distintos dispositivos, navegadores (Safari, Firefox) y condiciones de luz, incluido el ajuste fino del umbral de la pinza.
+Verificado de forma automática en Chromium (móvil y escritorio emulados) con una cámara simulada: arranque de cámara, carga del modelo, detección de mano, reconocimiento de índice / selección / puño / mano abierta sobre fotos reales, dibujo, borrador, deshacer, rehacer, limpiar con confirmación, descarga PNG, diseño en vertical y horizontal y liberación de la cámara. Queda pendiente la prueba manual con cámara real en distintos dispositivos, navegadores (Safari, Firefox) y condiciones de luz, incluido el ajuste fino del umbral de la pinza.

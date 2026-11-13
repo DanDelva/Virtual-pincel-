@@ -19,6 +19,9 @@ import { useHandTracking } from './hooks/useHandTracking'
 import type { Settings, Tool } from './types'
 import { BACKGROUND_COLORS, BRUSHES, COLORS } from './utils/drawingUtils'
 
+/** En pantallas pequeñas (teléfono) lo más cómodo es verse detrás del lienzo y dibujar donde está el dedo. */
+const isSmallScreen = () => typeof window !== 'undefined' && Math.min(window.innerWidth, window.innerHeight) < 600
+
 const DEFAULT_SETTINGS: Settings = {
   pinchThreshold: 0.3,
   sensitivity: 0.5,
@@ -26,14 +29,14 @@ const DEFAULT_SETTINGS: Settings = {
   stabilityFrames: 3,
   drawMode: 'pinch',
   showLandmarks: true,
-  background: 'dark',
+  background: 'light',
 }
-const STORAGE_KEY = 'virtual-pincel:settings'
+const STORAGE_KEY = 'virtual-pincel:settings:v2'
 
 function loadSettings(): Settings {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
-    return { ...DEFAULT_SETTINGS, ...saved }
+    return { ...DEFAULT_SETTINGS, ...(isSmallScreen() ? { background: 'camera' } : null), ...saved }
   } catch {
     return DEFAULT_SETTINGS
   }
@@ -72,6 +75,27 @@ export default function App() {
     }
   }, [settings])
 
+  // Con la cámara activa se evita que la pantalla del teléfono se apague mientras se dibuja sin tocarla.
+  useEffect(() => {
+    if (!cameraActive || !('wakeLock' in navigator)) return
+    let lock: WakeLockSentinel | null = null
+    let released = false
+    const acquire = () => {
+      if (document.visibilityState !== 'visible') return
+      navigator.wakeLock.request('screen').then(
+        (l) => (released ? void l.release() : (lock = l)),
+        () => undefined,
+      )
+    }
+    acquire()
+    document.addEventListener('visibilitychange', acquire)
+    return () => {
+      released = true
+      document.removeEventListener('visibilitychange', acquire)
+      void lock?.release().catch(() => undefined)
+    }
+  }, [cameraActive])
+
   // El menú de gestos se mantiene un instante tras cambiar de gesto para que no parpadee.
   const selecting = tracking.gesture === 'open' || tracking.gesture === 'select'
   useEffect(() => {
@@ -100,7 +124,7 @@ export default function App() {
   }, [cameraStatus, start, stop])
   const startCamera = useCallback(() => void start(), [start])
 
-  const { undo, clear, download } = drawing
+  const { undo, redo, clear, download } = drawing
   const background = settings.background
   const handleDownload = useCallback(() => download(BACKGROUND_COLORS[background]), [download, background])
 
@@ -115,7 +139,7 @@ export default function App() {
       </Header>
 
       <main className="relative flex min-h-0 flex-1 flex-col gap-3 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:flex-row lg:gap-4 lg:px-4 lg:pb-4">
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 short:flex-row">
           <DrawingCanvas
             drawing={drawing}
             stageRef={stageRef}
@@ -171,26 +195,29 @@ export default function App() {
               size={size}
               tool={tool}
               canUndo={drawing.canUndo}
+              canRedo={drawing.canRedo}
               isEmpty={drawing.isEmpty}
               onColor={pickColor}
               onSize={pickSize}
               onTool={setTool}
               onUndo={undo}
+              onRedo={redo}
               onClear={clear}
             />
           </DrawingCanvas>
 
-          <div className="glass flex shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-2.5 rounded-3xl px-3 py-2.5 lg:justify-between lg:px-4">
+          <div className="glass flex shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-2.5 rounded-3xl px-3 py-2.5 short:w-40 short:flex-col short:flex-nowrap short:justify-start short:overflow-y-auto short:px-1.5 lg:justify-between lg:px-4">
             <ColorPalette value={color} onChange={pickColor} />
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2.5 short:flex-col sm:gap-x-3">
               <BrushSelector value={size} color={color} onChange={pickSize} />
-              <span className="h-6 w-px bg-white/10" />
               <CanvasControls
                 tool={tool}
                 canUndo={drawing.canUndo}
+                canRedo={drawing.canRedo}
                 isEmpty={drawing.isEmpty}
                 onToolChange={setTool}
                 onUndo={undo}
+                onRedo={redo}
                 onClear={clear}
                 onDownload={handleDownload}
               />
@@ -200,7 +227,7 @@ export default function App() {
 
         {/* Móvil: la cámara flota sobre el lienzo. Escritorio: panel lateral con ayuda. */}
         <aside
-          className={`absolute top-2.5 right-5 z-10 w-24 sm:w-36 lg:static lg:flex lg:w-80 lg:shrink-0 lg:flex-col lg:gap-3 lg:overflow-y-auto ${
+          className={`absolute top-2.5 right-5 z-10 w-24 short:top-auto short:right-auto short:bottom-5 short:left-5 short:w-28 sm:w-36 lg:static lg:flex lg:w-80 lg:shrink-0 lg:flex-col lg:gap-3 lg:overflow-y-auto ${
             cameraActive ? '' : 'max-lg:hidden'
           }`}
         >

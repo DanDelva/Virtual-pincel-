@@ -7,6 +7,8 @@ import type { DrawingApi } from './useDrawing'
 
 /** Tiempo que hay que mantener el cursor sobre un botón para activarlo con gestos. */
 const DWELL_MS = 750
+/** Bloqueo tras activar un botón, para evitar activaciones repetidas. */
+const COOLDOWN_MS = 900
 
 export type CursorMode = 'draw' | 'erase' | 'select' | 'hover'
 
@@ -35,11 +37,19 @@ interface Options {
 export function useGestureController({ liveRef, drawing, stageRef, cursorRef, overlayRef }: Options) {
   const smoother = useRef(new PointSmoother())
   const lastAnchorKind = useRef<'tip' | 'palm'>('tip')
-  const dwell = useRef<{ el: HTMLElement | null; start: number; fired: boolean }>({ el: null, start: 0, fired: false })
+  const dwell = useRef<{ el: HTMLElement | null; start: number }>({ el: null, start: 0 })
+
+  /** Solo se cierran los trazos iniciados por gestos, para no cortar los hechos con el dedo o el ratón. */
+  const ownsStroke = useRef(false)
+  const endOwnStroke = useCallback(() => {
+    if (!ownsStroke.current) return
+    ownsStroke.current = false
+    drawing.endStroke()
+  }, [drawing])
 
   const resetDwell = useCallback(() => {
     dwell.current.el?.removeAttribute('data-gesture-hover')
-    dwell.current = { el: null, start: 0, fired: false }
+    dwell.current = { el: null, start: 0 }
   }, [])
 
   const updateDwell = useCallback((clientX: number, clientY: number, time: number): number => {
@@ -49,17 +59,18 @@ export function useGestureController({ liveRef, drawing, stageRef, cursorRef, ov
     if (target !== state.el) {
       state.el?.removeAttribute('data-gesture-hover')
       target?.setAttribute('data-gesture-hover', '')
-      dwell.current = { el: target, start: time, fired: false }
+      dwell.current = { el: target, start: time }
       return 0
     }
-    if (!target || state.fired) return 0
+    if (!target) return 0
     const progress = (time - state.start) / DWELL_MS
     if (progress >= 1) {
-      state.fired = true
+      // Tras el bloqueo se puede volver a activar el mismo botón (p. ej. confirmar «limpiar»).
+      state.start = time + COOLDOWN_MS
       target.click()
       return 0
     }
-    return progress
+    return Math.max(0, progress)
   }, [])
 
   return useCallback(
@@ -77,7 +88,7 @@ export function useGestureController({ liveRef, drawing, stageRef, cursorRef, ov
       }
 
       if (!frame || !stage) {
-        drawing.endStroke()
+        endOwnStroke()
         resetDwell()
         smoother.current.reset()
         if (cursor) cursor.dataset.visible = 'false'
@@ -94,7 +105,7 @@ export function useGestureController({ liveRef, drawing, stageRef, cursorRef, ov
       if (anchorKind !== lastAnchorKind.current) {
         lastAnchorKind.current = anchorKind
         smoother.current.reset()
-        drawing.endStroke()
+        endOwnStroke()
       }
 
       const mapped = cameraToCanvas(frame.anchor, {
@@ -110,12 +121,13 @@ export function useGestureController({ liveRef, drawing, stageRef, cursorRef, ov
 
       const strokeSize = erasing ? eraserSize(live.size) : live.size
       if (mode === 'draw' || mode === 'erase') {
-        const style = drawing.currentStyle()
+        const style = ownsStroke.current ? drawing.currentStyle() : null
+        ownsStroke.current = true
         const changed = !style || style.erase !== erasing || style.color !== live.color || style.size !== strokeSize
         if (changed) drawing.startStroke(point, { color: live.color, size: strokeSize, erase: erasing })
         else drawing.extendStroke(point)
       } else {
-        drawing.endStroke()
+        endOwnStroke()
       }
 
       const x = point.x * rect.width
@@ -131,6 +143,6 @@ export function useGestureController({ liveRef, drawing, stageRef, cursorRef, ov
         cursor.style.setProperty('--dwell', `${Math.round(progress * 360)}deg`)
       }
     },
-    [liveRef, cursorRef, stageRef, overlayRef, drawing, resetDwell, updateDwell],
+    [liveRef, cursorRef, stageRef, overlayRef, drawing, endOwnStroke, resetDwell, updateDwell],
   )
 }

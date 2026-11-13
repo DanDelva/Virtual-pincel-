@@ -10,11 +10,13 @@ interface Props {
   size: number
   tool: Tool
   canUndo: boolean
+  canRedo: boolean
   isEmpty: boolean
   onColor: (color: string) => void
   onSize: (size: number) => void
   onTool: (tool: Tool) => void
   onUndo: () => void
+  onRedo: () => void
   onClear: () => void
 }
 
@@ -22,7 +24,7 @@ interface Props {
  * Menú flotante dentro del lienzo para elegir herramientas sin tocar la pantalla:
  * aparece con la mano abierta y cada botón se activa manteniendo el cursor encima.
  */
-function GestureMenuBase({ visible, color, size, tool, canUndo, isEmpty, onColor, onSize, onTool, onUndo, onClear }: Props) {
+function GestureMenuBase({ visible, color, size, tool, canUndo, canRedo, isEmpty, onColor, onSize, onTool, onUndo, onRedo, onClear }: Props) {
   return (
     <div
       className={`absolute inset-x-2 bottom-2 z-20 flex justify-center transition-all duration-300 ${
@@ -36,7 +38,7 @@ function GestureMenuBase({ visible, color, size, tool, canUndo, isEmpty, onColor
         <ColorPalette value={color} onChange={onColor} gestureTargets size="lg" />
         <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-2 sm:gap-x-3">
           <BrushSelector value={size} color={color} onChange={onSize} gestureTargets size="lg" />
-          <CanvasControls tool={tool} canUndo={canUndo} isEmpty={isEmpty} onToolChange={onTool} onUndo={onUndo} onClear={onClear} gestureTargets size="lg" />
+          <CanvasControls tool={tool} canUndo={canUndo} canRedo={canRedo} isEmpty={isEmpty} onToolChange={onTool} onUndo={onUndo} onRedo={onRedo} onClear={onClear} gestureTargets size="lg" />
         </div>
       </div>
     </div>

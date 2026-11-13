@@ -21,11 +21,15 @@ export function useDrawing() {
   const currentRef = useRef<Stroke | null>(null)
   /** Copia previa a "limpiar", para poder deshacerlo. */
   const clearedRef = useRef<Stroke[] | null>(null)
+  /** Acciones deshechas, para poder rehacerlas. */
+  const redoRef = useRef<Array<Stroke | 'clear'>>([])
   const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
   const [isEmpty, setIsEmpty] = useState(true)
 
   const sync = useCallback(() => {
     setCanUndo(strokesRef.current.length > 0 || clearedRef.current !== null)
+    setCanRedo(redoRef.current.length > 0)
     setIsEmpty(strokesRef.current.length === 0)
   }, [])
 
@@ -81,6 +85,7 @@ export function useDrawing() {
       currentRef.current = stroke
       strokesRef.current.push(stroke)
       clearedRef.current = null
+      redoRef.current = []
       const ctx = ctxRef.current
       if (ctx) drawLastSegment(ctx, stroke, sizeRef.current.w, sizeRef.current.h)
     },
@@ -113,8 +118,25 @@ export function useDrawing() {
     if (strokesRef.current.length === 0 && clearedRef.current) {
       strokesRef.current = clearedRef.current
       clearedRef.current = null
+      redoRef.current.push('clear')
     } else {
-      strokesRef.current.pop()
+      const removed = strokesRef.current.pop()
+      if (removed) redoRef.current.push(removed)
+    }
+    redraw()
+    sync()
+  }, [endStroke, redraw, sync])
+
+  const redo = useCallback(() => {
+    endStroke()
+    const action = redoRef.current.pop()
+    if (!action) return
+    if (action === 'clear') {
+      clearedRef.current = strokesRef.current
+      strokesRef.current = []
+    } else {
+      strokesRef.current.push(action)
+      clearedRef.current = null
     }
     redraw()
     sync()
@@ -125,6 +147,7 @@ export function useDrawing() {
     if (strokesRef.current.length === 0) return
     clearedRef.current = strokesRef.current
     strokesRef.current = []
+    redoRef.current = []
     redraw()
     sync()
   }, [endStroke, redraw, sync])
@@ -140,8 +163,8 @@ export function useDrawing() {
   const currentStyle = useCallback((): StrokeStyle | null => currentRef.current, [])
 
   return useMemo(
-    () => ({ canvasRef, canUndo, isEmpty, startStroke, extendStroke, endStroke, undo, clear, download, isDrawing, currentStyle }),
-    [canUndo, isEmpty, startStroke, extendStroke, endStroke, undo, clear, download, isDrawing, currentStyle],
+    () => ({ canvasRef, canUndo, canRedo, isEmpty, startStroke, extendStroke, endStroke, undo, redo, clear, download, isDrawing, currentStyle }),
+    [canUndo, canRedo, isEmpty, startStroke, extendStroke, endStroke, undo, redo, clear, download, isDrawing, currentStyle],
   )
 }
 
