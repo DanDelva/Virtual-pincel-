@@ -11,6 +11,9 @@ Aplicación web para **dibujar en el aire** con los gestos de la mano. La cámar
 | ✋ Mano abierta | Pausa el dibujo y abre el menú de herramientas |
 | ✌️ Índice y medio levantados | Selección: mantén el cursor ~0,75 s sobre un color o herramienta (con un breve bloqueo entre activaciones) |
 | ✊ Puño cerrado | Borrador |
+| 👍 Pulgar arriba / 👎 pulgar abajo | Reacción «me gusta» / «no me gusta» (emojis sobre el lienzo) |
+| 🫶 Corazón con las dos manos | Reacción ❤️ (índices unidos arriba, pulgares unidos abajo) |
+| 🖕 Dedo medio levantado | Se censura: la mano se tapa en el vídeo (desactivable en Ajustes) |
 
 En **Ajustes** puedes cambiar al modo «Solo pinza» (el índice solo mueve el cursor y la pinza pinta), ajustar el **umbral de la pinza**, la **sensibilidad**, el **suavizado**, los **fotogramas de estabilidad** y el fondo del lienzo (oscuro, claro o la propia cámara). También se puede dibujar con el dedo o el ratón.
 

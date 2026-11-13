@@ -17,8 +17,11 @@ export interface Landmark {
  *  - open:   mano abierta (pausa + selección de herramientas)
  *  - select: índice y medio levantados (selección)
  *  - fist:   puño cerrado (borrador)
+ *  - like / dislike: pulgar arriba / abajo (reacción)
+ *  - heart:  corazón formado con las dos manos (reacción)
+ *  - obscene: dedo medio levantado (se censura)
  */
-export type Gesture = 'none' | 'point' | 'pinch' | 'open' | 'select' | 'fist'
+export type Gesture = 'none' | 'point' | 'pinch' | 'open' | 'select' | 'fist' | 'like' | 'dislike' | 'heart' | 'obscene'
 
 export type Tool = 'brush' | 'eraser'
 export type DrawMode = 'pinch' | 'index'
@@ -39,6 +42,8 @@ export interface Settings {
   stabilityFrames: number
   drawMode: DrawMode
   showLandmarks: boolean
+  /** Tapa la mano en el vídeo cuando se detecta una seña obscena. */
+  censor: boolean
   background: CanvasBackground
 }
 
@@ -57,6 +62,8 @@ export interface Stroke extends StrokeStyle {
 export interface HandFrame {
   landmarks: Landmark[]
   gesture: Gesture
+  /** La seña obscena se detecta sin esperar a la estabilización, para censurar cuanto antes. */
+  obscene: boolean
   /** Punto de control en coordenadas de cámara (0..1): punta del índice o centro de la palma. */
   anchor: Point
   pinchRatio: number

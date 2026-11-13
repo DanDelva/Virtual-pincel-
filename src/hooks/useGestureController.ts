@@ -1,8 +1,8 @@
 import { useCallback, useRef, type RefObject } from 'react'
 import type { HandFrame, Settings, Tool } from '../types'
 import { cameraToCanvas, PointSmoother } from '../utils/coordinates'
-import { drawHandOverlay, eraserSize } from '../utils/drawingUtils'
-import { GESTURE_INFO } from '../utils/gestureUtils'
+import { drawCensorBlock, drawHandOverlay, eraserSize } from '../utils/drawingUtils'
+import { GESTURE_INFO, handBounds } from '../utils/gestureUtils'
 import type { DrawingApi } from './useDrawing'
 
 /** Tiempo que hay que mantener el cursor sobre un botón para activarlo con gestos. */
@@ -27,6 +27,8 @@ interface Options {
   stageRef: RefObject<HTMLDivElement | null>
   cursorRef: RefObject<HTMLDivElement | null>
   overlayRef: RefObject<HTMLCanvasElement | null>
+  /** Recuadro que tapa la mano sobre el lienzo cuando la cámara está de fondo. */
+  censorRef: RefObject<HTMLDivElement | null>
 }
 
 /**
@@ -34,7 +36,7 @@ interface Options {
  * borrar o seleccionar herramientas por permanencia. Trabaja directamente sobre
  * el DOM/canvas mediante refs, sin pasar por el estado de React.
  */
-export function useGestureController({ liveRef, drawing, stageRef, cursorRef, overlayRef }: Options) {
+export function useGestureController({ liveRef, drawing, stageRef, cursorRef, overlayRef, censorRef }: Options) {
   const smoother = useRef(new PointSmoother())
   const lastAnchorKind = useRef<'tip' | 'palm'>('tip')
   const dwell = useRef<{ el: HTMLElement | null; start: number }>({ el: null, start: 0 })
@@ -82,7 +84,12 @@ export function useGestureController({ liveRef, drawing, stageRef, cursorRef, ov
       // Esqueleto de la mano sobre la vista de cámara.
       const overlay = overlayRef.current
       const octx = overlay?.getContext('2d')
-      if (overlay && octx) {
+      const censoring = !!frame && frame.obscene && live.settings.censor
+      const censorBox = censorRef.current
+      if (censorBox && !censoring) censorBox.dataset.visible = 'false'
+      if (overlay && octx && censoring) {
+        drawCensorBlock(octx, frame.landmarks, overlay.width, overlay.height)
+      } else if (overlay && octx) {
         const show = frame && live.settings.showLandmarks
         drawHandOverlay(octx, show ? frame.landmarks : null, overlay.width, overlay.height, frame ? GESTURE_INFO[frame.gesture].color : '#fff')
       }
@@ -108,11 +115,26 @@ export function useGestureController({ liveRef, drawing, stageRef, cursorRef, ov
         endOwnStroke()
       }
 
-      const mapped = cameraToCanvas(frame.anchor, {
+      const mapping = {
         mirror: live.mirrored,
         sensitivity: settings.sensitivity,
         cover: settings.background === 'camera' ? { videoAspect: frame.videoAspect, canvasAspect: rect.width / rect.height } : undefined,
-      })
+      }
+      const mapped = cameraToCanvas(frame.anchor, mapping)
+
+      // Con la cámara de fondo, la mano que hace la seña obscena se tapa también sobre el lienzo.
+      if (censorBox && censoring && mapping.cover) {
+        const b = handBounds(frame.landmarks, 0.25)
+        const p1 = cameraToCanvas({ x: b.minX, y: b.minY }, mapping)
+        const p2 = cameraToCanvas({ x: b.maxX, y: b.maxY }, mapping)
+        censorBox.dataset.visible = 'true'
+        censorBox.style.left = `${Math.min(p1.x, p2.x) * 100}%`
+        censorBox.style.top = `${Math.min(p1.y, p2.y) * 100}%`
+        censorBox.style.width = `${Math.abs(p2.x - p1.x) * 100}%`
+        censorBox.style.height = `${Math.abs(p2.y - p1.y) * 100}%`
+      } else if (censorBox) {
+        censorBox.dataset.visible = 'false'
+      }
       const point = smoother.current.filter(mapped, frame.time, settings.smoothing)
 
       const tracing = gesture === 'pinch' || (settings.drawMode === 'index' && gesture === 'point')
@@ -135,7 +157,7 @@ export function useGestureController({ liveRef, drawing, stageRef, cursorRef, ov
       const progress = mode === 'select' ? updateDwell(rect.left + x, rect.top + y, frame.time) : (resetDwell(), 0)
 
       if (cursor) {
-        cursor.dataset.visible = 'true'
+        cursor.dataset.visible = censoring ? 'false' : 'true'
         cursor.dataset.mode = mode
         cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`
         cursor.style.setProperty('--cursor-size', `${Math.max(strokeSize, 10)}px`)
@@ -143,6 +165,6 @@ export function useGestureController({ liveRef, drawing, stageRef, cursorRef, ov
         cursor.style.setProperty('--dwell', `${Math.round(progress * 360)}deg`)
       }
     },
-    [liveRef, cursorRef, stageRef, overlayRef, drawing, endOwnStroke, resetDwell, updateDwell],
+    [liveRef, cursorRef, stageRef, overlayRef, censorRef, drawing, endOwnStroke, resetDwell, updateDwell],
   )
 }

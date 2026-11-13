@@ -1,5 +1,5 @@
 import type { BrushOption, ColorOption, Landmark, Point, Stroke } from '../types'
-import { HAND_CONNECTIONS } from './gestureUtils'
+import { HAND_CONNECTIONS, handBounds } from './gestureUtils'
 
 export const COLORS: ColorOption[] = [
   { name: 'Negro', value: '#111827' },
@@ -141,6 +141,23 @@ export function drawHandOverlay(
     ctx.arc(l.x * w, l.y * h, isTip ? unit * 2 : unit * 1.3, 0, Math.PI * 2)
     ctx.fill()
   })
+}
+
+/** Tapa la mano en la vista de cámara con un mosaico opaco. */
+export function drawCensorBlock(ctx: CanvasRenderingContext2D, landmarks: Landmark[], w: number, h: number) {
+  ctx.clearRect(0, 0, w, h)
+  const b = handBounds(landmarks, 0.25)
+  const x = b.minX * w
+  const y = b.minY * h
+  const bw = (b.maxX - b.minX) * w
+  const bh = (b.maxY - b.minY) * h
+  const cell = Math.max(8, Math.min(bw, bh) / 6)
+  for (let cy = 0; cy * cell < bh; cy++) {
+    for (let cx = 0; cx * cell < bw; cx++) {
+      ctx.fillStyle = (cx + cy) % 2 === 0 ? '#1f1f2e' : '#34344a'
+      ctx.fillRect(x + cx * cell, y + cy * cell, Math.min(cell, bw - cx * cell) + 0.5, Math.min(cell, bh - cy * cell) + 0.5)
+    }
+  }
 }
 
 export function downloadCanvasAsPng(source: HTMLCanvasElement, background: string, filename: string) {

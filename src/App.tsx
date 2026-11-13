@@ -16,7 +16,7 @@ import { useCamera } from './hooks/useCamera'
 import { useDrawing } from './hooks/useDrawing'
 import { useGestureController, type LiveState } from './hooks/useGestureController'
 import { useHandTracking } from './hooks/useHandTracking'
-import type { Settings, Tool } from './types'
+import type { Gesture, Settings, Tool } from './types'
 import { BACKGROUND_COLORS, BRUSHES, COLORS } from './utils/drawingUtils'
 
 /** En pantallas pequeñas (teléfono) lo más cómodo es verse detrás del lienzo y dibujar donde está el dedo. */
@@ -29,9 +29,11 @@ const DEFAULT_SETTINGS: Settings = {
   stabilityFrames: 3,
   drawMode: 'index',
   showLandmarks: true,
+  censor: true,
   background: 'light',
 }
-const STORAGE_KEY = 'virtual-pincel:settings:v3'
+const REACTIONS: Partial<Record<Gesture, string>> = { like: '👍', dislike: '👎', heart: '❤️' }
+const STORAGE_KEY = 'virtual-pincel:settings:v4'
 
 function loadSettings(): Settings {
   try {
@@ -56,6 +58,7 @@ export default function App() {
   const stageRef = useRef<HTMLDivElement>(null)
   const cursorRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
+  const censorRef = useRef<HTMLDivElement>(null)
 
   // Valores "en vivo" para el bucle de seguimiento, que corre fuera de React.
   const settingsRef = useRef(settings)
@@ -63,7 +66,7 @@ export default function App() {
   const liveRef = useRef<LiveState>({ settings, color, size, tool, mirrored: camera.mirrored })
   liveRef.current = { settings, color, size, tool, mirrored: camera.mirrored }
 
-  const onFrame = useGestureController({ liveRef, drawing, stageRef, cursorRef, overlayRef })
+  const onFrame = useGestureController({ liveRef, drawing, stageRef, cursorRef, overlayRef, censorRef })
   const cameraActive = camera.status === 'active'
   const tracking = useHandTracking({ videoRef: camera.videoRef, active: cameraActive, settingsRef, onFrame })
 
@@ -107,6 +110,16 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [selecting])
 
+  // Reacciones: al reconocer me gusta / no me gusta / corazón se lanzan emojis sobre el lienzo.
+  const [reaction, setReaction] = useState<{ emoji: string; id: number } | null>(null)
+  useEffect(() => {
+    const emoji = REACTIONS[tracking.gesture]
+    if (!emoji) return
+    setReaction({ emoji, id: Date.now() })
+    const timer = setTimeout(() => setReaction(null), 1800)
+    return () => clearTimeout(timer)
+  }, [tracking.gesture])
+
   const updateSettings = useCallback((patch: Partial<Settings>) => setSettings((s) => ({ ...s, ...patch })), [])
   const resetSettings = useCallback(() => setSettings(DEFAULT_SETTINGS), [])
   const openSettings = useCallback(() => setSettingsOpen(true), [])
@@ -144,6 +157,7 @@ export default function App() {
             drawing={drawing}
             stageRef={stageRef}
             cursorRef={cursorRef}
+            censorRef={censorRef}
             background={background}
             stream={camera.stream}
             mirrored={camera.mirrored}
@@ -186,6 +200,26 @@ export default function App() {
                 <p className={`animate-fade-up rounded-full px-4 py-2 text-sm font-semibold ${lightStage ? 'bg-slate-900/80 text-white' : 'bg-white/10 text-slate-200'} backdrop-blur`}>
                   ✋ Muestra tu mano a la cámara
                 </p>
+              </div>
+            )}
+
+            {reaction && (
+              <div key={reaction.id} className="pointer-events-none absolute inset-0 z-20 overflow-hidden" aria-hidden>
+                {[12, 30, 46, 63, 80].map((left, i) => (
+                  <span
+                    key={left}
+                    className="reaction-emoji"
+                    style={{ left: `${left}%`, animationDelay: `${i * 90}ms`, ['--tilt' as string]: `${i % 2 ? 14 : -14}deg` }}
+                  >
+                    {reaction.emoji}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {cameraActive && tracking.gesture === 'obscene' && settings.censor && (
+              <div className="pointer-events-none absolute inset-x-0 top-16 z-20 flex justify-center">
+                <p className="animate-fade-up rounded-full bg-rose-600 px-4 py-2 text-sm font-bold text-white shadow-lg">🚫 Seña censurada</p>
               </div>
             )}
 
